@@ -18,3 +18,6 @@ SOURCES += main.cpp\
 HEADERS  += widget.h
 
 FORMS    += widget.ui
+
+DISTFILES += \
+    bin/setting.ini
