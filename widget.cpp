@@ -52,7 +52,7 @@ void Widget::on_pushButtonOpenReport_clicked()
             item1->setText(0,line.mid(start,end-start+1));
             item2=0;
         }
-        else if(line.startsWith("  [ "))//一级标题`
+        else if(line.startsWith("  [ "))//一级标题``
         {
             start = line.indexOf("[ ")+2;
             end = line.indexOf(" ]")-1;
