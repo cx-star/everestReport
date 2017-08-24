@@ -29,14 +29,20 @@ void Widget::on_pushButtonOpenReport_clicked()
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
     QTextStream in(&file);
+
     int start,end;
     QTreeWidgetItem *item1=0,*item2=0,*item3=0,*item4=0;
+
+    //左侧视图
     ui->treeWidget->clear();
     QStringList headerLabelsList;
     headerLabelsList.append("项目");
     headerLabelsList.append("值");
     ui->treeWidget->setHeaderLabels(headerLabelsList);
     ui->treeWidget->setColumnCount(2);
+
+    //四级标题最长长度
+    int max4Title = 0;
 
     while(!in.atEnd())
     {
@@ -52,40 +58,47 @@ void Widget::on_pushButtonOpenReport_clicked()
             item1->setText(0,line.mid(start,end-start+1));
             item2=0;
         }
-        else if(line.startsWith("  [ "))//一级标题``
+        else if(line.startsWith("  [ "))//二级标题
         {
             start = line.indexOf("[ ")+2;
             end = line.indexOf(" ]")-1;
             item2 = new QTreeWidgetItem(item1);
             item2->setText(0,line.mid(start,end-start+1));
         }
-        else if(line.startsWith("    ")&&!line.startsWith("      "))//二级标题
+        else if(line.startsWith("    ")&&!line.startsWith("      "))//三级标题
         {
             start = line.indexOf(QRegularExpression("\\S"));//非空白
-            end = line.indexOf("   ",start)-1;//没有找到则返回-1，
+            end = line.indexOf("  ",start)-1;//没有找到则返回-1，
             item3 = new QTreeWidgetItem(item2==0?item1:item2);
             QString text = line.mid(start,end-start+1);
             item3->setText(0,text);//end=-1时，返回start后所有字符
             if(end>0)//有值
             {
                 start = line.indexOf(QRegularExpression("\\S"),end+1);//非空白
-                end = line.indexOf("   ",start)-1;//没有找到则返回-1，
-                QString text = line.mid(start,end-start+1);
+                end = line.indexOf("  ",start)-1;//没有找到则返回-1，
+                QString text = line.mid(start/*,end-start+1*/);
                 item3->setText(1,text);//end=-1时，返回start后所有字符
             }
         }
-        else if(line.startsWith("      "))//三级标题
+        else if(line.startsWith("      "))//四级标题
         {
             start = line.indexOf(QRegularExpression("\\S"));
-            end = line.indexOf("   ",start)-1;
+            end = line.indexOf("  ",start)-1;
+            if(end==-2&&max4Title!=0){//期望第一次时不是‘标题过长’状态
+                end = max4Title-1;
+            }
             item4 = new QTreeWidgetItem(item3==0?item2:item3);
             QString text = line.mid(start,end-start+1);
             item4->setText(0,text);//end=-1时，返回start后所有字符
             if(end>0)//有值
             {
                 start = line.indexOf(QRegularExpression("\\S"),end+1);//非空白
-                end = line.indexOf("   ",start)-1;//没有找到则返回-1，
-                QString text = line.mid(start,end-start+1);
+                if(max4Title==0){//
+                    max4Title=line.mid(0,start).toLocal8Bit().length();
+                    qDebug()<<max4Title;
+                }
+                //end = line.indexOf("  ",start)-1;//没有找到则返回-1
+                QString text = line.mid(start/*,end-start+1*/);//返回全部
                 item4->setText(1,text);//end=-1时，返回start后所有字符
             }
         }
